@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Mouse illustration">
+  <defs>
+    <linearGradient id="g4" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" rx="36" fill="#ecfeff"/>
+  <rect x="275" y="120" width="250" height="330" rx="120" fill="url(#g4)"/>
+  <rect x="390" y="160" width="20" height="100" rx="10" fill="#cffafe"/>
+  <circle cx="400" cy="176" r="10" fill="#cffafe"/>
+  <path d="M275 300 C330 340, 470 340, 525 300" stroke="#cffafe" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <text x="400" y="520" text-anchor="middle" fill="#0f172a" font-size="30" font-family="Inter, Arial, sans-serif" font-weight="700">Mouse</text>
+</svg>
