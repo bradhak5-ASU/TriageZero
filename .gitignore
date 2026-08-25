@@ -1,14 +1,19 @@
-# Node
-node_modules/
-frontend/dist/
+.env
+.env.*
+!.env.example
 
-# Python
 __pycache__/
 *.pyc
 .venv/
+venv/
 
-# Env
-.env
+node_modules/
+dist/
 
-# OS
 .DS_Store
+
+.pytest_cache/
+playwright-report/
+test-results/
+
+coverage/
