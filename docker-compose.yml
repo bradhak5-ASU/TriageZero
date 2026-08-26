@@ -28,6 +28,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
       APP_ENV: ${APP_ENV}
+      NOVACART_DEFECT_SCENARIO: ${NOVACART_DEFECT_SCENARIO:-}
     ports:
       - "8000:8000"
     depends_on:
