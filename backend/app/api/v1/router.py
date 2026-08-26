@@ -7,8 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import asc, desc, or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.db.session import SessionLocal
-from app.models import Order, OrderItem, Product
+from app.models import Investigation, Order, OrderItem, Product
+from app.schemas.investigation import FailurePackageCreate, InvestigationCreateAck, InvestigationRead
 from app.schemas.order import OrderCreate, OrderRead
 from app.schemas.product import ProductRead
 
@@ -79,6 +81,40 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.post("/investigations", response_model=InvestigationCreateAck, status_code=status.HTTP_202_ACCEPTED)
+def create_investigation(package_in: FailurePackageCreate, db: Session = Depends(get_db)) -> InvestigationCreateAck:
+    investigation = Investigation(
+        status="received",
+        source=package_in.source,
+        schema_version=package_in.schema_version,
+        package=package_in.model_dump(),
+    )
+
+    db.add(investigation)
+    db.commit()
+    db.refresh(investigation)
+
+    return InvestigationCreateAck(
+        investigation_id=investigation.id,
+        status=investigation.status,
+        received_at=investigation.received_at,
+    )
+
+
+@router.get("/investigations/{investigation_id}", response_model=InvestigationRead)
+def get_investigation(investigation_id: str, db: Session = Depends(get_db)) -> InvestigationRead:
+    investigation = db.get(Investigation, investigation_id)
+    if investigation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Investigation not found.")
+
+    return InvestigationRead(
+        investigation_id=investigation.id,
+        status=investigation.status,
+        received_at=investigation.received_at,
+        package=investigation.package,
+    )
+
+
 @router.get("/categories", response_model=list[str])
 def list_categories(db: Session = Depends(get_db)) -> list[str]:
     categories = db.scalars(select(Product.category).distinct().order_by(Product.category)).all()
@@ -135,6 +171,12 @@ def get_product(product_id: int, db: Session = Depends(get_db)) -> ProductRead:
 
 @router.post("/orders", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 def create_order(order_in: OrderCreate, db: Session = Depends(get_db)) -> OrderRead:
+    if settings.novacart_defect_scenario == "checkout_500":
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="We couldn't place your order. Please try again.",
+        )
+
     if not order_in.items:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cart cannot be empty.")
 

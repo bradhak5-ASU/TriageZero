@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str
     frontend_origin: str = "http://localhost:5173"
+    novacart_defect_scenario: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

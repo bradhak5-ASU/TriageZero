@@ -1,0 +1,7 @@
+{
+  "checkout_500": {
+    "expected_classification": "backend_application_defect",
+    "expected_severity": "high",
+    "expected_release_risk": "block_release"
+  }
+}
