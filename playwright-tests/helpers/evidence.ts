@@ -30,6 +30,12 @@ export type ApiEvidence = {
   failureText?: string;
 };
 
+export type SubmittedNetworkEvidence = {
+  method: string;
+  url: string;
+  status: number;
+};
+
 export type FailureEvidenceOptions = {
   testInfo: TestInfo;
   error: Error;
@@ -76,7 +82,6 @@ export type FailurePackage = {
     browser: string;
   };
   test: {
-    test_id: string;
     name: string;
     file: string;
     status: 'failed';
@@ -88,7 +93,7 @@ export type FailurePackage = {
     expected?: string;
     actual?: string;
   };
-  network_evidence: ApiEvidence[];
+  network_evidence: SubmittedNetworkEvidence[];
   console_errors: string[];
   artifacts: {
     screenshot_path: string;
@@ -225,9 +230,25 @@ function sanitizeStackTrace(stackTrace?: string): string | undefined {
   const repoRoot = repositoryRoot();
   const playwrightRoot = process.cwd();
 
-  return stackTrace
+  return stripAnsiControlCodes(stackTrace)
     .replaceAll(`${repoRoot}${path.sep}`, '')
     .replaceAll(`${playwrightRoot}${path.sep}`, 'playwright-tests/');
+}
+
+export function stripAnsiControlCodes(value: string): string {
+  return value.replace(
+    // eslint-disable-next-line no-control-regex
+    /[\u001b\u009b][[\]()#;?]*(?:[a-zA-Z\d]*(?:;[a-zA-Z\d]*)*\u0007|(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~])|[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g,
+    ''
+  );
+}
+
+export function normalizeNetworkEvidence(apiEvents: ApiEvidence[]): SubmittedNetworkEvidence[] {
+  return apiEvents.map((event) => ({
+    method: event.method,
+    url: event.url,
+    status: typeof event.status === 'number' ? event.status : 0,
+  }));
 }
 
 function buildRunId(testInfo: TestInfo, startedAt: string): string {
@@ -257,19 +278,18 @@ export function buildFailurePackage(
       browser: evidence.browserProjectName,
     },
     test: {
-      test_id: testInfo.testId,
       name: evidence.testName,
       file: toRepositoryRelativePath(evidence.testFile),
       status: 'failed',
       retry: evidence.retryNumber,
     },
     failure: {
-      message: evidence.errorMessage,
+      message: stripAnsiControlCodes(evidence.errorMessage),
       stack_trace: sanitizeStackTrace(evidence.stackTrace),
       expected: evidence.expectedValue === undefined ? undefined : String(evidence.expectedValue),
       actual: evidence.actualValue === undefined ? undefined : String(evidence.actualValue),
     },
-    network_evidence: evidence.failedApiRequests,
+    network_evidence: normalizeNetworkEvidence(evidence.failedApiRequests),
     console_errors: evidence.browserConsoleErrors,
     artifacts: {
       screenshot_path: toPlaywrightRelativePath(testInfo.outputPath('test-failed-1.png')),

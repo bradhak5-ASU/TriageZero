@@ -20,6 +20,10 @@ type ClientOptions = {
 
 const DEFAULT_TIMEOUT_MS = 10000;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -49,31 +53,62 @@ function apiBaseUrl(apiUrl = process.env.TRIAGEZERO_API_URL): string {
 async function parseJsonResponse(response: Response) {
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = body && typeof body === 'object' && 'detail' in body ? JSON.stringify(body.detail) : response.statusText;
-    throw new Error(`TriageZero API returned HTTP ${response.status}: ${detail}`);
+    throw new Error(`TriageZero API returned HTTP ${response.status}: ${formatApiError(body, response.statusText)}`);
   }
   return body;
 }
 
-export function buildFailurePackageIdempotencyKey(failurePackage: FailurePackage): string {
-  const stablePayload = {
-    schema_version: failurePackage.schema_version,
-    source: failurePackage.source,
-    repository: failurePackage.repository,
-    environment: failurePackage.environment,
-    test: {
-      test_id: failurePackage.test.test_id,
-      name: failurePackage.test.name,
-      file: failurePackage.test.file,
-    },
-    failure: {
-      expected: failurePackage.failure.expected,
-      actual: failurePackage.failure.actual,
-    },
-    network_evidence: failurePackage.network_evidence,
-  };
+function fieldPathFromValue(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(String).join('.');
+  if (!isRecord(value)) return undefined;
 
-  return createHash('sha256').update(JSON.stringify(stablePayload)).digest('hex');
+  const candidate = value.path ?? value.field ?? value.field_path ?? value.loc;
+  if (candidate !== undefined) return fieldPathFromValue(candidate);
+  return undefined;
+}
+
+function collectFieldPaths(value: unknown): string[] {
+  if (!isRecord(value) && !Array.isArray(value)) return [];
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectFieldPaths(item));
+  }
+
+  const directFields = value.field_paths ?? value.fields ?? value.errors ?? value.detail;
+  const directPath = fieldPathFromValue(value);
+  const paths = directPath ? [directPath] : [];
+
+  if (directFields !== undefined && directFields !== value) {
+    paths.push(...collectFieldPaths(directFields));
+  }
+
+  return [...new Set(paths.filter(Boolean))];
+}
+
+function formatApiError(body: unknown, fallback: string): string {
+  if (!isRecord(body)) return fallback;
+
+  const errorBody = isRecord(body.error) ? body.error : body;
+  const code = typeof errorBody.code === 'string' ? errorBody.code : undefined;
+  const message =
+    typeof errorBody.message === 'string'
+      ? errorBody.message
+      : typeof body.detail === 'string'
+        ? body.detail
+        : fallback;
+  const fieldPaths = collectFieldPaths(errorBody);
+  const codePrefix = code ? `${code}: ` : '';
+  const fields = fieldPaths.length > 0 ? ` Fields: ${fieldPaths.join(', ')}` : '';
+
+  return `${codePrefix}${message}${fields}`;
+}
+
+export function buildFailurePackageIdempotencyKey(failurePackage: FailurePackage): string {
+  const testIdentity = `${failurePackage.test.file}#${failurePackage.test.name}`;
+  const keyMaterial = `${failurePackage.run.run_id}:${testIdentity}`;
+
+  return createHash('sha256').update(keyMaterial).digest('hex');
 }
 
 export async function submitFailurePackage(
