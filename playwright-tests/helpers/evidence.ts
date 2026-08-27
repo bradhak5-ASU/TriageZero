@@ -11,6 +11,11 @@ const FORBIDDEN_AI_EVIDENCE_PATTERNS = [
   'expected_action',
   'defect_scenario',
   'checkout_500',
+  'wrong_total',
+  'frontend_render_failure',
+  'slow_confirmation',
+  'dependency_unavailable',
+  'broken_test_locator',
   'controlled defect',
   'novacart_defect_scenario',
 ];
@@ -41,8 +46,11 @@ export type FailureEvidenceOptions = {
   error: Error;
   consoleErrors: string[];
   apiEvents: ApiEvidence[];
+  expectedResult?: string;
+  actualResult?: string;
   expectedValue?: number | string;
   actualValue?: number | string;
+  includeSuccessfulApiEvents?: boolean;
 };
 
 export type AiSafeFailureEvidence = {
@@ -367,14 +375,19 @@ export async function writeFailureEvidence({
   error,
   consoleErrors,
   apiEvents,
+  expectedResult,
+  actualResult,
   expectedValue,
   actualValue,
+  includeSuccessfulApiEvents = false,
 }: FailureEvidenceOptions) {
   const evidence: AiSafeFailureEvidence = {
     testName: testInfo.title,
     testFile: testInfo.file,
-    expectedResult: 'Checkout order request should return HTTP 201 and show the order confirmation page.',
-    actualResult: `Checkout order request returned HTTP ${actualValue ?? 'unknown'} before confirmation appeared.`,
+    expectedResult:
+      expectedResult || 'Checkout order request should return HTTP 201 and show the order confirmation page.',
+    actualResult:
+      actualResult || `Checkout order request returned HTTP ${actualValue ?? 'unknown'} before confirmation appeared.`,
     errorMessage: error.message,
     stackTrace: error.stack,
     expectedValue,
@@ -385,7 +398,9 @@ export async function writeFailureEvidence({
       capturedAt: new Date().toISOString(),
     },
     browserConsoleErrors: consoleErrors,
-    failedApiRequests: apiEvents.filter((event) => event.status === undefined || event.status >= 400),
+    failedApiRequests: includeSuccessfulApiEvents
+      ? apiEvents
+      : apiEvents.filter((event) => event.status === undefined || event.status >= 400),
   };
 
   validateEvidenceForAI(evidence);

@@ -3,5 +3,55 @@
     "expected_classification": "backend_application_defect",
     "expected_severity": "high",
     "expected_release_risk": "block_release"
+  },
+  "wrong_total": {
+    "description": "Checkout/order total is incorrect even though checkout request completes.",
+    "expected_classification": "data_integrity_defect",
+    "expected_severity": "high",
+    "expected_release_risk": "block_release",
+    "expected_root_cause_category": "pricing_or_total_calculation",
+    "expected_recommended_action": "Investigate checkout/order total calculation before release.",
+    "affected_component": "backend_order_total_calculation",
+    "disable_or_reset": "Unset NOVACART_DEFECT_SCENARIO or set it to an empty value, then restart NovaCart."
+  },
+  "frontend_render_failure": {
+    "description": "The backend succeeds, but an important confirmation-page UI element fails to render.",
+    "expected_classification": "frontend_application_defect",
+    "expected_severity": "high",
+    "expected_release_risk": "block_release",
+    "expected_root_cause_category": "frontend_render_or_state",
+    "expected_recommended_action": "Investigate confirmation-page rendering/state handling.",
+    "affected_component": "frontend_confirmation_rendering",
+    "disable_or_reset": "Unset NOVACART_DEFECT_SCENARIO or set it to an empty value, then restart NovaCart."
+  },
+  "slow_confirmation": {
+    "description": "Checkout completes successfully but confirmation takes longer than the acceptable test threshold.",
+    "expected_classification": "performance_timing_defect",
+    "expected_severity": "medium",
+    "expected_release_risk": "moderate",
+    "expected_root_cause_category": "latency_or_timing",
+    "expected_recommended_action": "Investigate confirmation latency before release.",
+    "affected_component": "checkout_confirmation_latency",
+    "disable_or_reset": "Unset NOVACART_DEFECT_SCENARIO or set it to an empty value, then restart NovaCart."
+  },
+  "dependency_unavailable": {
+    "description": "NovaCart depends on a backend/service call that returns HTTP 503 or is unavailable.",
+    "expected_classification": "dependency_failure",
+    "expected_severity": "high",
+    "expected_release_risk": "moderate",
+    "expected_root_cause_category": "dependency_unavailable",
+    "expected_recommended_action": "Investigate downstream service availability and retry/failure handling.",
+    "affected_component": "backend_downstream_dependency",
+    "disable_or_reset": "Unset NOVACART_DEFECT_SCENARIO or set it to an empty value, then restart NovaCart."
+  },
+  "broken_test_locator": {
+    "description": "The application still works for a user, but the Playwright locator is outdated or intentionally mismatched.",
+    "expected_classification": "test_automation_defect",
+    "expected_severity": "low",
+    "expected_release_risk": "none",
+    "expected_root_cause_category": "test_locator_or_test_code",
+    "expected_recommended_action": "Update the Playwright locator/test implementation.",
+    "affected_component": "playwright_locator_contract",
+    "disable_or_reset": "Unset NOVACART_DEFECT_SCENARIO or set it to an empty value, then restart NovaCart."
   }
 }

@@ -35,11 +35,32 @@ test.describe('AI evidence validation safeguard', () => {
     ).toThrow(/defect_scenario/);
   });
 
-  test('rejects scenario labels inside string values', () => {
+  for (const scenarioId of [
+    'checkout_500',
+    'wrong_total',
+    'frontend_render_failure',
+    'slow_confirmation',
+    'dependency_unavailable',
+    'broken_test_locator',
+  ]) {
+    test(`rejects scenario label ${scenarioId} inside outbound evidence`, () => {
+      expect(() =>
+        validateEvidenceForAI({
+          failure: {
+            message: `Failure captured while running ${scenarioId}.`,
+          },
+        })
+      ).toThrow(new RegExp(scenarioId));
+    });
+  }
+
+  test('rejects scenario labels inside nested values with normalized casing', () => {
     expect(() =>
       validateEvidenceForAI({
-        errorMessage: 'Order failed while running checkout_500.',
+        failure: {
+          details: ['The Wrong Total mode changed the value.'],
+        },
       })
-    ).toThrow(/checkout_500/);
+    ).toThrow(/wrong_total/);
   });
 });

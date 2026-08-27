@@ -43,6 +43,7 @@ services:
       - .env
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_NOVACART_DEFECT_SCENARIO: ${NOVACART_DEFECT_SCENARIO:-}
     ports:
       - "5173:5173"
     depends_on:

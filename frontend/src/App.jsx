@@ -17,6 +17,15 @@ const DEFAULT_CHECKOUT = {
   zip_code: '',
 };
 
+const DEFECT_SCENARIO = import.meta.env.VITE_NOVACART_DEFECT_SCENARIO || '';
+const SLOW_CONFIRMATION_DELAY_MS = 6500;
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 function currency(value) {
   return value.toLocaleString('en-US', {
     style: 'currency',
@@ -486,6 +495,7 @@ function CartView({ cartItems, onBack, onRemove, onUpdateQty, onCheckout }) {
 
 function CheckoutView({ cartItems, checkoutData, onBack, onUpdateField, onPlaceOrder, loading, error }) {
   const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
+  const placeOrderTestId = DEFECT_SCENARIO === 'broken_test_locator' ? 'place-order-action' : 'place-order';
 
   return (
     <div className="container flow-page">
@@ -563,7 +573,7 @@ function CheckoutView({ cartItems, checkoutData, onBack, onUpdateField, onPlaceO
 
           {error ? <p className="error-text">{error}</p> : null}
 
-          <button className="btn btn-primary place-order" type="submit" disabled={loading} data-testid="place-order">
+          <button className="btn btn-primary place-order" type="submit" disabled={loading} data-testid={placeOrderTestId}>
             {loading ? 'Placing Order…' : 'Place Order'}
           </button>
         </form>
@@ -597,14 +607,22 @@ function CheckoutView({ cartItems, checkoutData, onBack, onUpdateField, onPlaceO
 }
 
 function ConfirmationView({ order, onContinue }) {
+  const showOrderNumber = DEFECT_SCENARIO !== 'frontend_render_failure';
+
   return (
     <div className="container flow-page">
       <section className="panel confirmation-card" data-testid="order-confirmation">
         <span className="confirmation-badge">Order Confirmed</span>
         <h2>Thanks for your order.</h2>
-        <p>
-          Order <strong>{order.order_number}</strong> is now <strong>{order.status}</strong>.
-        </p>
+        {showOrderNumber ? (
+          <p>
+            Order <strong>{order.order_number}</strong> is now <strong>{order.status}</strong>.
+          </p>
+        ) : (
+          <p>
+            Your order is now <strong>{order.status}</strong>.
+          </p>
+        )}
         <div className="confirmation-grid">
           <div>
             <h3>Customer</h3>
@@ -841,6 +859,10 @@ export default function App() {
         customer: checkoutData,
         items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity })),
       });
+
+      if (DEFECT_SCENARIO === 'slow_confirmation') {
+        await delay(SLOW_CONFIRMATION_DELAY_MS);
+      }
 
       setOrder(response);
       setCart([]);

@@ -128,6 +128,12 @@ def list_products(
 
 @router.get("/products/{product_id}", response_model=ProductRead)
 def get_product(product_id: int, db: Session = Depends(get_db)) -> ProductRead:
+    if settings.novacart_defect_scenario == "dependency_unavailable":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Product details are temporarily unavailable. Please try again.",
+        )
+
     product = db.get(Product, product_id)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found.")
@@ -183,6 +189,8 @@ def create_order(order_in: OrderCreate, db: Session = Depends(get_db)) -> OrderR
     subtotal = round(subtotal, 2)
     shipping = 0.0
     total = round(subtotal + shipping, 2)
+    if settings.novacart_defect_scenario == "wrong_total":
+        total = round(max(0.0, total - 100.0), 2)
 
     order = Order(
         order_number=f"NC-{uuid4().hex[:10].upper()}",

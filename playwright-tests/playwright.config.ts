@@ -5,6 +5,7 @@ export default defineConfig({
   timeout: 30000,
   retries: 0,
   reporter: [['list']],
+  testIgnore: process.env.RUN_CONTROLLED_DEFECTS === 'true' ? undefined : /scenario-probes\.spec\.ts/,
   use: {
     baseURL: process.env.NOVACART_BASE_URL || 'http://localhost:5173',
     screenshot: 'only-on-failure',
