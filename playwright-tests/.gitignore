@@ -2,3 +2,13 @@ node_modules/
 test-results/
 test-results-clean/
 playwright-report/
+
+screenshots/
+**/screenshots/
+trace.zip
+**/trace.zip
+*.webm
+*.mp4
+*.mov
+test-failed-*.png
+*-screenshot.png
