@@ -15,5 +15,25 @@ dist/
 .pytest_cache/
 playwright-report/
 test-results/
+test-results-clean/
+
+screenshots/
+**/screenshots/
+trace.zip
+**/trace.zip
+*.webm
+*.mp4
+*.mov
+test-failed-*.png
+*-screenshot.png
+
+*token*
+*secret*
+*credential*
+*credentials*
+google-*.json
+github-*.txt
+*.pem
+*.p12
 
 coverage/
