@@ -31,6 +31,8 @@ Optional environment variables:
 ```bash
 NOVACART_BASE_URL=http://localhost:5173
 TRIAGEZERO_API_URL=http://localhost:8001
+# Required only when TriageZero-AI has API_AUTH_REQUIRED=true:
+TRIAGEZERO_API_TOKEN=<ingestion token supplied securely by the AI service owner>
 ```
 
 ## Clean NovaCart
@@ -66,6 +68,10 @@ TRIAGEZERO_API_URL=http://localhost:8001 npm test -- --grep "successful checkout
 ```
 
 On failure, Playwright keeps the local screenshot, trace, evidence JSON, and package JSON. If `TRIAGEZERO_API_URL` is set, it also submits the generated `failure-package.json` to TriageZero-AI. Upload failures are logged but do not replace the original Playwright failure.
+
+When the AI service enables authentication, set `TRIAGEZERO_API_TOKEN` in the
+CI secret store. The uploader sends it only in the `Authorization: Bearer`
+header; it is never written into evidence or `failure-package.json`.
 
 ## Manual Package Submission
 

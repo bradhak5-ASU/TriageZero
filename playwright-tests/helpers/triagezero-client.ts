@@ -15,6 +15,7 @@ type InvestigationResult = {
 
 type ClientOptions = {
   apiUrl?: string;
+  apiToken?: string;
   timeoutMs?: number;
 };
 
@@ -117,15 +118,18 @@ export async function submitFailurePackage(
 ): Promise<SubmitResult> {
   validateEvidenceForAI(failurePackage);
   const idempotencyKey = buildFailurePackageIdempotencyKey(failurePackage);
+  const token = options.apiToken ?? process.env.TRIAGEZERO_API_TOKEN;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Idempotency-Key': idempotencyKey,
+  };
+  if (token?.trim()) headers.Authorization = `Bearer ${token.trim()}`;
 
   const response = await fetchWithTimeout(
     `${apiBaseUrl(options.apiUrl)}/api/v1/investigations`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': idempotencyKey,
-      },
+      headers,
       body: JSON.stringify(failurePackage),
     },
     options.timeoutMs
@@ -148,10 +152,14 @@ export async function getInvestigation(
   investigationId: string,
   options: ClientOptions = {}
 ): Promise<InvestigationResult> {
+  const token = options.apiToken ?? process.env.TRIAGEZERO_API_TOKEN;
+  const headers: Record<string, string> = {};
+  if (token?.trim()) headers.Authorization = `Bearer ${token.trim()}`;
   const response = await fetchWithTimeout(
     `${apiBaseUrl(options.apiUrl)}/api/v1/investigations/${investigationId}`,
     {
       method: 'GET',
+      headers,
     },
     options.timeoutMs
   );

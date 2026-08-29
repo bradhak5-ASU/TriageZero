@@ -100,6 +100,29 @@ test.describe('TriageZero failure package client', () => {
     }
   });
 
+  test('sends the ingestion token only as a bearer header', async () => {
+    const requests: { init: RequestInit }[] = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (_input, init) => {
+      requests.push({ init: init ?? {} });
+      return jsonResponse({ investigation_id: 'inv-auth', status: 'received' });
+    };
+
+    try {
+      const token = 'local-ingestion-token-that-is-never-in-evidence';
+      await submitFailurePackage(sampleFailurePackage(), {
+        apiUrl: 'http://triagezero.test',
+        apiToken: token,
+      });
+
+      const request = requests[0].init;
+      expect((request.headers as Record<string, string>).Authorization).toBe(`Bearer ${token}`);
+      expect(String(request.body)).not.toContain(token);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   test('rejects forbidden evidence before upload', async () => {
     let requestCount = 0;
     const originalFetch = globalThis.fetch;
