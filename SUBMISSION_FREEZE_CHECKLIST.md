@@ -44,12 +44,12 @@ Freeze only when every required item is checked. Record the final commit SHA and
 
 ## Final Git synchronization
 
-- [ ] Intended documentation and source changes are committed in both repositories.
-- [ ] Local `main` is aligned with `origin/main` in both repositories.
-- [ ] Required branches/tags are pushed and both repositories are publicly readable.
-- [ ] README links resolve at the final remote commit.
+- [x] Intended documentation and source changes are committed in both repositories.
+- [x] Local `main` is aligned with `origin/main` in both repositories.
+- [x] Required `main` branches are pushed and both repositories are publicly readable; no submission tag is currently required.
+- [x] README and judge-document links resolve at the final remote commit.
 - [ ] Final commit SHAs are copied into the submission record.
-- [ ] No untracked submission-critical file remains only on one workstation.
+- [x] No untracked submission-critical file remains only on one workstation.
 
 ## Freeze
 
@@ -66,3 +66,4 @@ Last recorded check: **2026-08-31 05:44:55 UTC**.
 - HTTP checks returned 200 for the dashboard, TriageZero liveness/readiness, NovaCart web/API health, and both public GitHub repositories.
 - A new isolated Chromium context rendered the dashboard sign-in screen and NovaCart with no page or console errors. This validates clean public-session behavior but does not replace the pending dedicated-account login check.
 - The NovaCart frontend production build, Python compilation, Docker Compose validation, Git whitespace check, and all 22 Playwright safeguard tests passed.
+- Git synchronization record: TriageZero submission-document content at `0d90a716df5a35fe6fee5589c6687ad93bd94ac9`; final checklist-status commit to be copied from GitHub after this file is frozen; `TriageZero-AI` at `d7ccfcdbe8410b3174f4604df2079dc1ed9c830f`.
